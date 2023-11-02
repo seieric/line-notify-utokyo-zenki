@@ -1,10 +1,31 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>LINE Notify Integration</title>
+    <title>お知らせLINE通知登録</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/light.css">
+    <meta property="og:title" content="お知らせLINE自動通知">
+    <meta property="og:description" content="東京大学教養学部前期課程HPのお知らせを毎日配信いたします。">
+    <style>
+      #loginBtn{
+        display: block;
+        padding: 50px;
+        border-radius: 5px;
+        border: 1px solid #333;
+        background-color: #06c755;
+        text-align: center;
+        text-decoration: none;
+        font-weight: 600;
+        color: #fff;
+      }
+      .large{
+        font-size: 3em;
+      }
+    </style>
   </head>
   <body>
-    <h1>Welcome to LINE Notify Integration</h1>
-    <a href="/auth">Connect to LINE Notify</a>
+    <h1>お知らせLINE通知登録</h1>
+    <p>東京大学教養学部前期課程HPのお知らせを毎日配信いたします。</p>
+    <a href="/auth" rel="nofollow noopener noreferrer" target="_blank" id="loginBtn"><span class="large">LINE通知を受け取る</span><br>※LINE連携画面に移動します。</a>
   </body>
 </html>

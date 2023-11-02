@@ -93,10 +93,10 @@ app.get("/callback", async (req, res) => {
       [accessToken, ipAddress, userAgent]
     );
 
-    res.send("LINE Notify Access Token saved to database");
+    res.send("連携しました。お知らせは毎日1回配信されます。このページは閉じて問題ありません。");
   } catch (error) {
     console.error("Error saving token to database: " + error);
-    res.status(500).send("Error saving token to database");
+    res.status(500).send("連携情報を保存するのに失敗しました。しばらく時間をおいてもう一度お試しください。");
   } finally {
     connection.release(); // コネクションを解放
   }
