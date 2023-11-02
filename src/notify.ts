@@ -120,6 +120,7 @@ async function main() {
   for (const item of newsData) {
     message += `${item.title}(${item.link})\n`;
   }
+  message += "\n連携解除はこちら(https://notify-bot.line.me/my/)";
 
   const connection = await getDBConnection();
   try {
