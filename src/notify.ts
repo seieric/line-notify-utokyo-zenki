@@ -24,7 +24,34 @@ async function notify(token: string, message: string) {
       }
     );
   } catch (error) {
-    console.error(`Error sending LINE Notify message(token: ${token}):`, error);
+    // 401エラーであればトークンが無効なのでデータベースから削除
+    if (
+      axios.isAxiosError(error) &&
+      error.response &&
+      error.response.status === 401
+    ) {
+      const connection = await getDBConnection();
+      try {
+        await connection.query(
+          "DELETE FROM line_notify_tokens WHERE token = ?",
+          [token]
+        );
+      } catch (error: unknown) {
+        if (typeof error === "object" && error !== null && "message" in error) {
+          console.error(
+            `Error deleting token ${token} from database:`,
+            (error as Error).message
+          );
+        }
+      } finally {
+        connection.release();
+      }
+    } else {
+      console.error(
+        `Error sending LINE Notify message(token: ${token}):`,
+        error
+      );
+    }
   }
 }
 
