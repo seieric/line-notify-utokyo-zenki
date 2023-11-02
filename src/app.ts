@@ -30,6 +30,8 @@ function generateRandomString() {
   return crypto.randomBytes(20).toString("hex");
 }
 
+app.set('trust proxy', 'loopback');
+
 app.get("/", (req, res) => {
   const state = generateRandomString();
   if (req.session) {
