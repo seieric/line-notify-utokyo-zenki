@@ -18,3 +18,7 @@ export const pool: Pool = createPool(dbConfig);
 export async function getDBConnection(): Promise<PoolConnection> {
   return await pool.getConnection();
 }
+
+export async function endPool(): Promise<void> {
+  await pool.end();
+}

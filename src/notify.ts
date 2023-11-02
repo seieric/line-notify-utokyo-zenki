@@ -1,5 +1,6 @@
 import axios from "axios";
-import {load} from "cheerio";
+import { load } from "cheerio";
+import { getDBConnection, endPool } from "./db";
 import path from "path";
 import dotenv from "dotenv";
 const ENV_PATH = path.join(__dirname, "/../.env");
@@ -10,7 +11,24 @@ type newsItem = {
   link: string | undefined;
 };
 
-async function scrapeWebsite() {
+async function notify(token: string, message: string) {
+  try {
+    await axios.post(
+      "https://notify-api.line.me/api/notify",
+      `message=${message}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+  } catch (error) {
+    console.error(`Error sending LINE Notify message(token: ${token}):`, error);
+  }
+}
+
+async function getNews() {
   const url = "https://www.c.u-tokyo.ac.jp/zenki/news/index.html";
 
   try {
@@ -39,7 +57,9 @@ async function scrapeWebsite() {
 
         if (dateMatch) {
           // 今日の0時0分0秒より前の日付の場合は終了
-          if (new Date(dateMatch[1]) < new Date(new Date().setHours(0, 0, 0, 0))) {
+          if (
+            new Date(dateMatch[1]) < new Date(new Date().setHours(0, 0, 0, 0))
+          ) {
             break;
           }
           const title = ddElements.eq(i).find("a").text().trim();
@@ -60,10 +80,38 @@ async function scrapeWebsite() {
       }
     });
 
-    console.log(JSON.stringify(newsData, null, 2));
+    return newsData;
   } catch (error) {
     console.error("[Error]", error);
+    return [];
   }
 }
 
-scrapeWebsite();
+async function main() {
+  const newsData = await getNews();
+  let message = "";
+  for (const item of newsData) {
+    message += `${item.title}(${item.link})\n`;
+  }
+
+  const connection = await getDBConnection();
+  try {
+    const [rows] = await connection.query(
+      "SELECT token FROM line_notify_tokens"
+    );
+
+    for (const row of rows as { token: string }[]) {
+      const token = row.token;
+      await notify(token, message);
+    }
+  } catch (error) {
+    console.error("Error querying tokens from database:", error);
+  } finally {
+    connection.release();
+  }
+
+  await endPool();
+  process.exit(0);
+}
+
+main();
