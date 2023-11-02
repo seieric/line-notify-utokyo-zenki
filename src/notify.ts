@@ -116,6 +116,7 @@ async function getNews() {
 
 async function main() {
   const newsData = await getNews();
+  if(newsData.length == 0) return;
   let message = "";
   for (const item of newsData) {
     message += `${item.title}(${item.link})\n`;
