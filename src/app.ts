@@ -5,9 +5,9 @@ import session from "express-session";
 import crypto from "crypto";
 import path from "path";
 import dotenv from "dotenv";
-import { connectToDatabase } from "./db";
+import { getDBConnection } from "./db";
 
-const ENV_PATH = path.join(__dirname, '/../.env');
+const ENV_PATH = path.join(__dirname, "/../.env");
 dotenv.config({ path: ENV_PATH });
 const app = express();
 const port = process.env.PORT || 3000;
@@ -81,25 +81,25 @@ app.get("/callback", async (req, res) => {
   const accessToken = tokenResponse.data.access_token;
   console.log("LINE Notify Access Token:", accessToken);
 
-  const connection = connectToDatabase();
   const ipAddress = req.ip;
   const userAgent = req.headers["user-agent"];
 
-  connection.query(
-    "INSERT INTO line_notify_tokens (token, access_time, ip_address, user_agent) VALUES (?, NOW(), ?, ?)",
-    [accessToken, ipAddress, userAgent],
-    (error) => {
-      if (error) {
-        console.error("Error saving token to database: " + error);
-        return res.status(500).send("Error saving token to database");
-      }
+  const connection = await getDBConnection();
 
-      res.send("LINE Notify Access Token saved to database");
-    }
-  );
+  try {
+    // データベースにトークンと関連情報を保存
+    await connection.execute(
+      "INSERT INTO line_notify_tokens (token, access_time, ip_address, user_agent) VALUES (?, NOW(), ?, ?)",
+      [accessToken, ipAddress, userAgent]
+    );
 
-  // データベース接続を閉じる
-  connection.end();
+    res.send("LINE Notify Access Token saved to database");
+  } catch (error) {
+    console.error("Error saving token to database: " + error);
+    res.status(500).send("Error saving token to database");
+  } finally {
+    connection.release(); // コネクションを解放
+  }
 });
 
 app.listen(port, () => {
