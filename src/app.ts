@@ -20,7 +20,7 @@ declare module "express-session" {
 
 app.use(
   session({
-    secret: "your-secret-key",
+    secret: process.env.SESSION_SECRET || "your-secret-key",
     resave: false,
     saveUninitialized: true,
   })
@@ -34,17 +34,13 @@ app.set('trust proxy', 'loopback');
 // publicディレクトリを公開
 app.use(express.static(path.join(__dirname, "../public")));
 
-app.get("/", (req, res) => {
+app.get("/auth", (req, res) => {
   const state = generateRandomString();
   if (req.session) {
     req.session.state = state;
+  } else {
+    res.status(400).send("Invalid session");
   }
-
-  res.sendFile(path.join(__dirname, "../public/index.html"));
-});
-
-app.get("/auth", (req, res) => {
-  const state = req.session ? req.session.state : "";
 
   const params = querystring.stringify({
     response_type: "code",
