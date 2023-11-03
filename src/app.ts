@@ -31,6 +31,8 @@ function generateRandomString() {
 }
 
 app.set('trust proxy', 'loopback');
+// publicディレクトリを公開
+app.use(express.static(path.join(__dirname, "../public")));
 
 app.get("/", (req, res) => {
   const state = generateRandomString();
