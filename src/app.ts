@@ -61,6 +61,10 @@ app.get("/callback", async (req, res) => {
   if (!receivedState || !sessionState || receivedState !== sessionState) {
     return res.status(400).send("Invalid state parameter");
   }
+  // 2回目からのアクセスはstateを削除
+  if (req.session) {
+    req.session.state = undefined;
+  }
   const code = req.query.code as string;
 
   const tokenResponse = await axios.post(
