@@ -25,6 +25,7 @@ app.use(
     saveUninitialized: true,
   })
 );
+app.set('view engine', 'pug');
 
 function generateRandomString() {
   return crypto.randomBytes(20).toString("hex");
@@ -93,10 +94,10 @@ app.get("/callback", async (req, res) => {
       [accessToken, ipAddress, userAgent]
     );
 
-    res.send("連携しました。お知らせは毎日1回配信されます。このページは閉じて問題ありません。");
+    res.render("finish", {title: "連携完了", message: "連携しました。お知らせは毎日18時に配信されます。このページは閉じて問題ありません。"})
   } catch (error) {
     console.error("Error saving token to database: " + error);
-    res.status(500).send("連携情報を保存するのに失敗しました。しばらく時間をおいてもう一度お試しください。");
+    res.status(500).render("finish", {title: "エラー", message: "連携情報を保存するのに失敗しました。しばらく時間をおいてもう一度お試しください。"})
   } finally {
     connection.release(); // コネクションを解放
   }
