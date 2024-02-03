@@ -6,9 +6,16 @@ import dotenv from "dotenv";
 const ENV_PATH = path.join(__dirname, "/../.env");
 dotenv.config({ path: ENV_PATH });
 
+enum NotifyType {
+  ALL,
+  FIRST_YEAR,
+  SECOND_YEAR,
+}
+
 type newsItem = {
   title: string;
   link: string | undefined;
+  type: NotifyType;
 };
 
 async function notify(token: string, message: string) {
@@ -81,13 +88,31 @@ async function getNews() {
       for (let i = 0; i < ddElements.length; i++) {
         const dateText = dtElements.eq(i).text().trim();
         const dateMatch = dateText.match(/(\d{4}\.\d{2}\.\d{2})/);
+        const dateImgs = dtElements.eq(i).find("img");
+        let type: NotifyType = NotifyType.ALL;
+        if (dateImgs.length == 2 && dateImgs.eq(1).attr("src")) {
+          const typeMatch = dateImgs.eq(1).attr("src")?.match(/news_z_(all|firstyear|secondyear)\.gif/);
+          if(typeMatch) {
+            switch(typeMatch[1]) {
+              case "firstyear":
+                type = NotifyType.FIRST_YEAR;
+                break;
+              case "secondyear":
+                type = NotifyType.SECOND_YEAR;
+                break;
+              default:
+                type = NotifyType.ALL;
+                break;
+            }
+          }
+        }
 
         if (dateMatch) {
           // 今日の0時0分0秒より前の日付の場合は終了
           if (
             new Date(dateMatch[1]) < new Date(new Date().setHours(0, 0, 0, 0))
           ) {
-            break;
+            continue;
           }
           const title = ddElements.eq(i).find("a").text().trim();
           let link = ddElements.eq(i).find("a").attr("href");
@@ -100,6 +125,7 @@ async function getNews() {
           const newsItem = {
             title,
             link,
+            type
           };
 
           newsData.push(newsItem);
@@ -117,21 +143,33 @@ async function getNews() {
 async function main() {
   const newsData = await getNews();
   if(newsData.length == 0) return;
-  let message = "";
-  for (const item of newsData) {
-    message += `${item.title}(${item.link})\n`;
+
+  let messages: string[] = [];
+
+  for (const type of [NotifyType.ALL, NotifyType.FIRST_YEAR, NotifyType.SECOND_YEAR]) {
+    let message = "";
+
+    for (const item of newsData) {
+      if(item.type === type || item.type === NotifyType.ALL) {
+        message += `${item.title}(${item.link})\n`;
+      }
+    }
+
+    if(message === "") continue;
+
+    message += "\n連携解除はこちら(https://notify-bot.line.me/my/)";
+    messages.push(message);
   }
-  message += "\n連携解除はこちら(https://notify-bot.line.me/my/)";
 
   const connection = await getDBConnection();
   try {
     const [rows] = await connection.query(
-      "SELECT token FROM line_notify_tokens"
+      "SELECT token, notify_type FROM line_notify_tokens"
     );
 
-    for (const row of rows as { token: string }[]) {
+    for (const row of rows as { token: string, notify_type: number }[]) {
       const token = row.token;
-      await notify(token, message);
+      await notify(token, messages[row.notify_type]);
     }
   } catch (error) {
     console.error("Error querying tokens from database:", error);
