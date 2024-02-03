@@ -1,0 +1,22 @@
+doctype html
+html
+  head
+    title= title + "| お知らせLINE通知登録"
+    meta(name="viewport", content="width=device-width,initial-scale=1.0")
+    link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/water.css@2/out/light.css")
+  body
+    h1= title
+    p= message
+    form(action="./finish", method="post")
+      input(type="hidden", name="_csrf", value=csrfToken)
+      div
+        label(for="1stYear") 1年生
+        input(type="radio", name="notify_type", value="1", id="1stYear")
+      div
+        label(for="2ndYear") 2年生
+        input(type="radio", name="notify_type", value="2", id="2ndYear")
+      div
+        label(for="all") すべて
+        input(type="radio", name="notify_type", value="3", id="all")
+      div
+        input(type="submit", value="選択")
