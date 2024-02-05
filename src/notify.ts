@@ -150,7 +150,7 @@ async function main() {
     let message = "";
 
     for (const item of newsData) {
-      if(item.type === type || item.type === NotifyType.ALL) {
+      if(type === NotifyType.ALL || item.type === type || item.type === NotifyType.ALL) {
         message += `${item.title}(${item.link})\n`;
       }
     }
