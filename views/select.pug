@@ -4,19 +4,36 @@ html
     title= title + "| お知らせLINE通知登録"
     meta(name="viewport", content="width=device-width,initial-scale=1.0")
     link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/water.css@2/out/light.css")
+    style.
+      form {
+        width: fit-content;
+        margin: 0 auto;
+      }
+      .form-group {
+        display: flex;
+        justify-content: space-between;
+        align-items: left;
+        font-size: 1.5em;
+        margin: 1em 0;
+      }
+      #submitBtn{
+        background: #06c755;
+        border: 1px solid #333;
+        color: #fff;
+      }
   body
     h1= title
     p= message
     form(action="./finish", method="post")
       input(type="hidden", name="_csrf", value=csrfToken)
-      div
+      .form-group
         label(for="1stYear") 1年生
         input(type="radio", name="notify_type", value="1", id="1stYear")
-      div
+      .form-group
         label(for="2ndYear") 2年生
         input(type="radio", name="notify_type", value="2", id="2ndYear")
-      div
+      .form-group
         label(for="all") すべて
         input(type="radio", name="notify_type", value="3", id="all")
-      div
-        input(type="submit", value="決定")
+      .form-group
+        input(type="submit", value="決定", id="submitBtn")
