@@ -5,6 +5,7 @@ import path from "path";
 import dotenv from "dotenv";
 const ENV_PATH = path.join(__dirname, "/../.env");
 dotenv.config({ path: ENV_PATH });
+import LINENotify from "./lib/LINENotify";
 
 enum NotifyType {
   ALL,
@@ -19,24 +20,11 @@ type newsItem = {
 };
 
 async function notify(token: string, message: string) {
+  const notify = new LINENotify();
   try {
-    await axios.post(
-      "https://notify-api.line.me/api/notify",
-      `message=${message}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
-    );
+    await notify.notify(token, message);
   } catch (error) {
-    // 401エラーであればトークンが無効なのでデータベースから削除
-    if (
-      axios.isAxiosError(error) &&
-      error.response &&
-      error.response.status === 401
-    ) {
+    if (notify.isTokenInvalidError(error)) {
       const connection = await getDBConnection();
       try {
         await connection.query(
@@ -91,9 +79,12 @@ async function getNews() {
         const dateImgs = dtElements.eq(i).find("img");
         let type: NotifyType = NotifyType.ALL;
         if (dateImgs.length == 2 && dateImgs.eq(1).attr("src")) {
-          const typeMatch = dateImgs.eq(1).attr("src")?.match(/news_z_(all|firstyear|secondyear)\.gif/);
-          if(typeMatch) {
-            switch(typeMatch[1]) {
+          const typeMatch = dateImgs
+            .eq(1)
+            .attr("src")
+            ?.match(/news_z_(all|firstyear|secondyear)\.gif/);
+          if (typeMatch) {
+            switch (typeMatch[1]) {
               case "firstyear":
                 type = NotifyType.FIRST_YEAR;
                 break;
@@ -125,7 +116,7 @@ async function getNews() {
           const newsItem = {
             title,
             link,
-            type
+            type,
           };
 
           newsData.push(newsItem);
@@ -142,20 +133,28 @@ async function getNews() {
 
 async function main() {
   const newsData = await getNews();
-  if(newsData.length == 0) return;
+  if (newsData.length == 0) return;
 
   let messages: string[] = [];
 
-  for (const type of [NotifyType.ALL, NotifyType.FIRST_YEAR, NotifyType.SECOND_YEAR]) {
+  for (const type of [
+    NotifyType.ALL,
+    NotifyType.FIRST_YEAR,
+    NotifyType.SECOND_YEAR,
+  ]) {
     let message = "";
 
     for (const item of newsData) {
-      if(type === NotifyType.ALL || item.type === type || item.type === NotifyType.ALL) {
+      if (
+        type === NotifyType.ALL ||
+        item.type === type ||
+        item.type === NotifyType.ALL
+      ) {
         message += `${item.title}(${item.link})\n`;
       }
     }
 
-    if(message === "") continue;
+    if (message === "") continue;
 
     message += "\n連携解除はこちら(https://notify-bot.line.me/my/)";
     messages.push(message);
@@ -167,7 +166,7 @@ async function main() {
       "SELECT token, notify_type FROM line_notify_tokens"
     );
 
-    for (const row of rows as { token: string, notify_type: number }[]) {
+    for (const row of rows as { token: string; notify_type: number }[]) {
       const token = row.token;
       await notify(token, messages[row.notify_type]);
     }
