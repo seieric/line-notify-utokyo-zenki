@@ -160,7 +160,7 @@ app.post("/finish", async (req, res) => {
     );
 
     let message = ""
-    switch (req.body.notify_type) {
+    switch (Number(req.body.notify_type)) {
       case NotifyType.FIRST_YEAR:
         message = "1年生向けのお知らせを通知します。";
         break;
