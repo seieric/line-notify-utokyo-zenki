@@ -187,6 +187,7 @@ app.post("/finish", async (req, res) => {
       title: "連携完了",
       message:
         "連携しました。お知らせは毎日18時に配信されます。このページは閉じて問題ありません。",
+      isHideLink: true,
     });
   } catch (error) {
     console.error("Error updating notify_type to database: " + error);
