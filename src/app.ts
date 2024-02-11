@@ -24,7 +24,7 @@ const redisClient = new Redis(
 redisClient.on("error", (error) => {
   console.error(error);
   process.exit(1);
-})
+});
 
 const redisStore = new RedisStore({
   client: redisClient,
@@ -69,7 +69,9 @@ app.get("/auth", (req, res) => {
   if (req.session) {
     req.session.state = state;
   } else {
-    res.status(400).send("Invalid session");
+    res.status(400).render("error", {
+      message: "Invalid session",
+    });
   }
 
   const params = querystring.stringify({
@@ -99,7 +101,9 @@ app.get("/callback", async (req, res) => {
     req.query.state !== req.session.state
   ) {
     req.session.state = undefined;
-    return res.status(400).send("Invalid request");
+    return res.status(400).render("error", {
+      message: "Invalid request",
+    });
   }
 
   // 2回目からのアクセスはstateを削除
@@ -160,7 +164,9 @@ app.get("/callback", async (req, res) => {
 
 app.post("/finish", async (req, res) => {
   if (!req.session || !req.body || req.body._csrf !== req.session.csrfToken) {
-    return res.status(400).send("Invalid CSRF token");
+    return res.status(400).render("error", {
+      message: "CSRF verification failed",
+    });
   }
 
   if (
@@ -169,11 +175,15 @@ app.post("/finish", async (req, res) => {
       Number(req.body.notify_type)
     )
   ) {
-    return res.status(400).send("Invalid request");
+    return res.status(400).render("error", {
+      message: "Invalid request",
+    });
   }
 
   if (!req.session.tokenId || !req.session.token) {
-    return res.status(400).send("Invalid session");
+    return res.status(400).render("error", {
+      message: "Invalid session",
+    });
   }
 
   // notify_typeを数字に変換

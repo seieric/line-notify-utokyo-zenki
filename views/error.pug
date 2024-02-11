@@ -1,0 +1,8 @@
+extends _layout
+block head
+  meta(http-equiv="refresh", content="3;url=/")
+block content
+  h1 エラー
+  p= message
+  p 3秒後にトップページに戻ります。自動で戻らない場合は、以下のリンクをクリックしてください。
+  a(href="/") トップページに戻る
