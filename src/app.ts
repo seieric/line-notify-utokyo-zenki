@@ -7,6 +7,9 @@ import path from "path";
 import dotenv from "dotenv";
 import { getDBConnection } from "./db";
 import { ResultSetHeader } from "mysql2";
+import { NotifyType } from "./lib/zenki/NotifyType";
+import LINENotify from "./lib/LINENotify";
+const notify = new LINENotify();
 
 const ENV_PATH = path.join(__dirname, "/../.env");
 dotenv.config({ path: ENV_PATH });
@@ -18,13 +21,8 @@ declare module "express-session" {
     state: string;
     csrfToken: string;
     tokenId: number;
+    token: string;
   }
-}
-
-enum NotifyType {
-  ALL,
-  FIRST_YEAR,
-  SECOND_YEAR,
 }
 
 app.use(
@@ -110,6 +108,7 @@ app.get("/callback", async (req, res) => {
     );
 
     req.session.tokenId = result[0].insertId;
+    req.session.token = accessToken;
 
     // CSRFトークンを生成
     const csrfToken = generateRandomString();
@@ -149,7 +148,7 @@ app.post("/finish", async (req, res) => {
     return res.status(400).send("Invalid request");
   }
 
-  if (!req.session.tokenId) {
+  if (!req.session.tokenId || !req.session.token) {
     return res.status(400).send("Invalid session");
   }
 
@@ -158,6 +157,25 @@ app.post("/finish", async (req, res) => {
     await connection.execute(
       "UPDATE line_notify_tokens SET notify_type = ? WHERE id = ?",
       [req.body.notify_type, req.session.tokenId]
+    );
+
+    let message = ""
+    switch (req.body.notify_type) {
+      case NotifyType.FIRST_YEAR:
+        message = "1年生向けのお知らせを通知します。";
+        break;
+      case NotifyType.SECOND_YEAR:
+        message = "2年生向けのお知らせを通知します。";
+        break;
+      case NotifyType.ALL:
+      default:
+        message = "すべてのお知らせを通知します。";
+        break;
+    }
+
+    await notify.notify(
+      req.session.token,
+      `通知設定が完了しました。${message}毎日18時にお知らせを配信します。`
     );
 
     res.render("finish", {
