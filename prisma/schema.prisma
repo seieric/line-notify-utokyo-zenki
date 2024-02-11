@@ -10,7 +10,7 @@ datasource db {
 model line_notify_tokens {
   id          Int      @id @default(autoincrement())
   token       String   @db.VarChar(255)
-  access_time DateTime @db.Timestamp(0) @default(now())
+  access_time DateTime @db.Timestamp(0)
   ip_address  String   @db.VarChar(45)
   user_agent  String   @db.VarChar(255)
   notify_type Int      @default(0)
