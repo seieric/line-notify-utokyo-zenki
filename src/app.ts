@@ -64,38 +64,42 @@ app.get("/auth", (req, res) => {
 });
 
 app.get("/callback", async (req, res) => {
-  const receivedState = req.query.state;
-  const sessionState = req.session ? req.session.state : "";
-
-  if (!receivedState || !sessionState || receivedState !== sessionState) {
-    return res.status(400).send("Invalid state parameter");
+  if (req.query.error) {
+    return res.render("finish", {
+      title: "連携エラー",
+      message:
+        "認証連携が中断されました。本サービスに登録したい場合は、もう一度トップページから進んでください。",
+    });
   }
-  // 2回目からのアクセスはstateを削除
-  if (req.session) {
+
+  if (!req.query.state || !req.query.code || !req.session.state || req.query.state !== req.session.state) {
     req.session.state = undefined;
+    return res.status(400).send("Invalid request");
   }
-  const code = req.query.code as string;
 
-  const tokenResponse = await axios.post(
-    "https://notify-bot.line.me/oauth/token",
-    querystring.stringify({
-      code,
-      client_id: process.env.LINE_NOTIFY_CLIENT_ID,
-      client_secret: process.env.LINE_NOTIFY_CLIENT_SECRET,
-      redirect_uri: process.env.REDIRECT_URI,
-      grant_type: "authorization_code",
-    }),
-    {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    }
-  );
-
-  const accessToken = tokenResponse.data.access_token;
-  console.log("LINE Notify Access Token:", accessToken);
+  // 2回目からのアクセスはstateを削除
+  req.session.state = undefined;
 
   try {
+    const code = req.query.code as string;
+    const tokenResponse = await axios.post(
+      "https://notify-bot.line.me/oauth/token",
+      querystring.stringify({
+        code,
+        client_id: process.env.LINE_NOTIFY_CLIENT_ID,
+        client_secret: process.env.LINE_NOTIFY_CLIENT_SECRET,
+        redirect_uri: process.env.REDIRECT_URI,
+        grant_type: "authorization_code",
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    const accessToken = tokenResponse.data.access_token;
+    console.log("LINE Notify Access Token:", accessToken);
     // データベースにトークンと関連情報を保存
     const result = await prisma.line_notify_tokens.create({
       data: {
