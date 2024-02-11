@@ -3,7 +3,7 @@ import axios from "axios";
 import * as querystring from "querystring";
 import RedisStore from "connect-redis";
 import session from "express-session";
-import { createClient } from "redis";
+import { Redis } from "ioredis";
 import crypto from "crypto";
 import path from "path";
 import dotenv from "dotenv";
@@ -18,10 +18,13 @@ dotenv.config({ path: ENV_PATH });
 const app = express();
 const port = process.env.PORT || 3000;
 
-const redisClient = createClient({
-  url: process.env.REDIS_URL || "redis://localhost:6379",
-});
-redisClient.connect().catch(console.error);
+const redisClient = new Redis(
+  process.env.REDIS_URL || "redis://localhost:6379"
+);
+redisClient.on("error", (error) => {
+  console.error(error);
+  process.exit(1);
+})
 
 const redisStore = new RedisStore({
   client: redisClient,
