@@ -5,11 +5,11 @@ import session from "express-session";
 import crypto from "crypto";
 import path from "path";
 import dotenv from "dotenv";
-import { getDBConnection } from "./db";
-import { ResultSetHeader } from "mysql2";
+import { PrismaClient } from "@prisma/client";
 import { NotifyType } from "./lib/zenki/NotifyType";
 import LINENotify from "./lib/LINENotify";
 const notify = new LINENotify();
+const prisma = new PrismaClient();
 
 const ENV_PATH = path.join(__dirname, "/../.env");
 dotenv.config({ path: ENV_PATH });
@@ -42,7 +42,7 @@ app.set("trust proxy", "loopback");
 // publicディレクトリを公開
 app.use(express.static(path.join(__dirname, "../public")));
 
-app.use(express.urlencoded({extended:true}))
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/auth", (req, res) => {
   const state = generateRandomString();
@@ -95,19 +95,17 @@ app.get("/callback", async (req, res) => {
   const accessToken = tokenResponse.data.access_token;
   console.log("LINE Notify Access Token:", accessToken);
 
-  const ipAddress = req.ip;
-  const userAgent = req.headers["user-agent"];
-
-  const connection = await getDBConnection();
-
   try {
     // データベースにトークンと関連情報を保存
-    const result = await connection.execute<ResultSetHeader>(
-      "INSERT INTO line_notify_tokens (token, access_time, ip_address, user_agent, notify_type) VALUES (?, NOW(), ?, ?, 0)",
-      [accessToken, ipAddress, userAgent]
-    );
+    const result = await prisma.line_notify_tokens.create({
+      data: {
+        token: accessToken,
+        ip_address: req.ip || "", // Set a default value of an empty string if req.ip is undefined
+        user_agent: req.headers["user-agent"] || "",
+      },
+    });
 
-    req.session.tokenId = result[0].insertId;
+    req.session.tokenId = result.id;
     req.session.token = accessToken;
 
     // CSRFトークンを生成
@@ -127,14 +125,10 @@ app.get("/callback", async (req, res) => {
       message:
         "連携情報を保存するのに失敗しました。しばらく時間をおいてもう一度お試しください。",
     });
-  } finally {
-    connection.release(); // コネクションを解放
   }
 });
 
 app.post("/finish", async (req, res) => {
-  const connection = await getDBConnection();
-
   if (!req.session || !req.body || req.body._csrf !== req.session.csrfToken) {
     return res.status(400).send("Invalid CSRF token");
   }
@@ -152,15 +146,21 @@ app.post("/finish", async (req, res) => {
     return res.status(400).send("Invalid session");
   }
 
+  // notify_typeを数字に変換
+  const notifyType = parseInt(req.body.notify_type);
   try {
     // 通知設定を反映
-    await connection.execute(
-      "UPDATE line_notify_tokens SET notify_type = ? WHERE id = ?",
-      [req.body.notify_type, req.session.tokenId]
-    );
+    await prisma.line_notify_tokens.update({
+      where: {
+        id: req.session.tokenId,
+      },
+      data: {
+        notify_type: notifyType,
+      },
+    });
 
-    let message = ""
-    switch (Number(req.body.notify_type)) {
+    let message = "";
+    switch (notifyType) {
       case NotifyType.FIRST_YEAR:
         message = "1年生向けのお知らせを通知します。";
         break;
@@ -190,8 +190,6 @@ app.post("/finish", async (req, res) => {
       message:
         "通知内容を保存するのに失敗しました。すべてのお知らせが通知されます。希望しない場合は、一度登録を解除してもう一度登録し直してください。",
     });
-  } finally {
-    connection.release(); // コネクションを解放
   }
 });
 
