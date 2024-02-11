@@ -11,7 +11,22 @@ export default class LINENotify {
     this.axios = axios;
   }
 
-  public async notify(token:string, message: string): Promise<void> {
+  public async notify(token: string, message: string, disableAutoSplit: boolean = false): Promise<void> {
+    // 1000文字以上の場合は分割して送信
+    if (message.length > 1000 && !disableAutoSplit) {
+      // 1000文字ごとに分割する
+      const messages = message.match(/[\s\S]{1,1000}/gm);
+      if (messages) {
+        for (const m of messages) {
+          await this._notify(token, m);
+        }
+      }
+    } else {
+      await this._notify(token, message);
+    }
+  }
+
+  private async _notify(token:string, message: string): Promise<void> {
     const endpoint = "https://notify-api.line.me/api/notify";
     const headers = {
       "Content-Type": "application/x-www-form-urlencoded",
