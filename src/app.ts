@@ -1,7 +1,9 @@
 import express from "express";
 import axios from "axios";
 import * as querystring from "querystring";
+import RedisStore from "connect-redis";
 import session from "express-session";
+import { createClient } from "redis";
 import crypto from "crypto";
 import path from "path";
 import dotenv from "dotenv";
@@ -16,6 +18,15 @@ dotenv.config({ path: ENV_PATH });
 const app = express();
 const port = process.env.PORT || 3000;
 
+const redisClient = createClient({
+  url: process.env.REDIS_URL || "redis://localhost:6379",
+});
+redisClient.connect().catch(console.error);
+
+const redisStore = new RedisStore({
+  client: redisClient,
+});
+
 declare module "express-session" {
   interface SessionData {
     state: string;
@@ -27,9 +38,11 @@ declare module "express-session" {
 
 app.use(
   session({
+    name: "session",
     secret: process.env.SESSION_SECRET || "your-secret-key",
     resave: false,
     saveUninitialized: true,
+    store: redisStore,
   })
 );
 app.set("view engine", "pug");
@@ -72,7 +85,12 @@ app.get("/callback", async (req, res) => {
     });
   }
 
-  if (!req.query.state || !req.query.code || !req.session.state || req.query.state !== req.session.state) {
+  if (
+    !req.query.state ||
+    !req.query.code ||
+    !req.session.state ||
+    req.query.state !== req.session.state
+  ) {
     req.session.state = undefined;
     return res.status(400).send("Invalid request");
   }
