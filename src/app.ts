@@ -100,6 +100,7 @@ app.get("/callback", async (req, res) => {
     const result = await prisma.line_notify_tokens.create({
       data: {
         token: accessToken,
+        access_time: new Date(),
         ip_address: req.ip || "", // Set a default value of an empty string if req.ip is undefined
         user_agent: req.headers["user-agent"] || "",
       },
