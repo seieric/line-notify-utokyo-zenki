@@ -19,4 +19,4 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key	: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          script: cd ${{ secrets.SSH_PROJECT_DIR }} && git pull && npm install && npx tsc && npx prisma migrate deploy && pm2 restart line-notify-utokyo-zenki
+          script: cd ${{ secrets.SSH_PROJECT_DIR }} && git pull && npm install && npx tsc && npx prisma migrate deploy && pm2 restart ecosystem.config.js
