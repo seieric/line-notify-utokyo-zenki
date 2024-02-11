@@ -1,11 +1,6 @@
-doctype html
-html
-  head
-    title= title + "| お知らせLINE通知登録"
-    meta(name="viewport", content="width=device-width,initial-scale=1.0")
-    link(rel="stylesheet", href="./assets/light.min.css")
-  body
-    h1= title
-    p= message
-    if !isHideLink
-      a(href="/") トップページに戻る
+extends _layout
+block content
+  h1= title
+  p= message
+  if !isHideLink
+    a(href="/") トップページに戻る

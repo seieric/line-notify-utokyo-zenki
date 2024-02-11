@@ -60,6 +60,10 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 app.use(express.urlencoded({ extended: true }));
 
+app.get("/", (req, res) => {
+  res.render("index");
+});
+
 app.get("/auth", (req, res) => {
   const state = generateRandomString();
   if (req.session) {

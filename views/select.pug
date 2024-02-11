@@ -1,39 +1,36 @@
-doctype html
-html
-  head
-    title= title + "| お知らせLINE通知登録"
-    meta(name="viewport", content="width=device-width,initial-scale=1.0")
-    link(rel="stylesheet", href="./assets/light.min.css")
-    style.
-      form {
-        width: fit-content;
-        margin: 0 auto;
-      }
-      .form-group {
-        display: flex;
-        justify-content: space-between;
-        align-items: left;
-        font-size: 1.5em;
-        margin: 1em 0;
-      }
-      #submitBtn{
-        background: #06c755;
-        border: 1px solid #333;
-        color: #fff;
-      }
-  body
-    h1= title
-    p= message
-    form(action="./finish", method="post")
-      input(type="hidden", name="_csrf", value=csrfToken)
-      .form-group
-        label(for="1stYear") 1年生
-        input(type="radio", name="notify_type", value="1", id="1stYear")
-      .form-group
-        label(for="2ndYear") 2年生
-        input(type="radio", name="notify_type", value="2", id="2ndYear")
-      .form-group
-        label(for="all") すべて
-        input(type="radio", name="notify_type", value="0", id="all")
-      .form-group
-        input(type="submit", value="決定", id="submitBtn")
+extends _layout
+block head
+  style.
+    #submitBtn{
+      background: #06c755;
+      border: 1px solid #333;
+      color: #fff;
+    }
+    .form-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: left;
+      font-size: 1.5em;
+      margin: 1em 0;
+    }
+    form {
+      width: fit-content;
+      margin: 0 auto;
+    }
+
+block content
+  h1= title
+  p= message
+  form(action="./finish" method="post")
+    input(type="hidden" name="_csrf", value=csrfToken)
+    .form-group
+      label(for="1stYear") 1年生
+      input(type="radio" name="notify_type" value="1" id="1stYear")
+    .form-group
+      label(for="2ndYear") 2年生
+      input(type="radio" name="notify_type" value="2" id="2ndYear")
+    .form-group
+      label(for="all") すべて
+      input(type="radio" name="notify_type" value="0" id="all")
+    .form-group
+      input(type="submit" value="決定" id="submitBtn")
