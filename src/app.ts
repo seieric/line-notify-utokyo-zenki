@@ -138,7 +138,6 @@ app.get(
       });
     } else {
       if (req.query.state !== req.session.state) {
-        console.log("Invalid state:", req.query.state, req.session.state);
         req.session.state = undefined;
         return res.status(400).view("error", {
           message: "Invalid request",
@@ -166,7 +165,6 @@ app.get(
         );
 
         const accessToken = tokenResponse.data.access_token;
-        console.log("LINE Notify Access Token:", accessToken);
         // データベースにトークンと関連情報を保存
         const result = await prisma.line_notify_tokens.create({
           data: {
@@ -191,7 +189,7 @@ app.get(
           csrfToken: csrfToken,
         });
       } catch (error) {
-        console.error("Error saving token to database: " + error);
+        req.log.error(error);
         return res.status(500).view("finish.pug", {
           title: "エラー",
           message:
@@ -263,7 +261,7 @@ app.post(
         isHideLink: true,
       });
     } catch (error) {
-      console.error("Error updating notify_type to database: " + error);
+      req.log.error(error);
       return res.status(500).view("finish", {
         title: "エラー",
         message:
