@@ -21,7 +21,6 @@ model RegistrationHistory {
   created_at      DateTime    @default(now()) @db.Timestamp(0)
   ip_address      String      @db.VarChar(45)
   user_agent      String      @db.VarChar(255)
-  notify_type     Int
   tracking_tag    TrackingTag @relation(fields: [tracking_tag_id], references: [id])
   tracking_tag_id Int
 }
