@@ -50,9 +50,16 @@ declare module "@fastify/session" {
 app.register(fastifyCookie);
 app.register(fastifySession, {
   cookieName: "session",
-  secret: process.env.SESSION || "your-secret-key-must-be-at-least-32-characters-long",
+  secret:
+    process.env.SESSION ||
+    "your-secret-key-must-be-at-least-32-characters-long",
   saveUninitialized: true,
   store: new RedisStore({ client: redisClient }),
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  }
 });
 // view engine
 app.register(fastifyView, {
@@ -86,13 +93,7 @@ app.get("/", (req, res) => {
 
 app.get("/auth", (req, res) => {
   const state = generateRandomString();
-  if (req.session) {
-    req.session.state = state;
-  } else {
-    res.status(400).view("error", {
-      message: "Invalid session",
-    });
-  }
+  req.session.state = state;
 
   const params = querystring.stringify({
     response_type: "code",
@@ -107,93 +108,87 @@ app.get("/auth", (req, res) => {
 
 const callback_schema = {
   schema: {
-    querystring: Type.Object({
-      error: Type.String(),
-      code: Type.String(),
-      state: Type.String(),
-    }),
-    required: {
-      querystring: {
-        oneOf: [["code", "state"], ["error"]],
-      },
-    },
+    querystring: Type.Union([
+      Type.Object({
+        error: Type.String(),
+      }), 
+      Type.Object({
+        code: Type.String(),
+        state: Type.String(),
+      })
+    ]),
   },
 };
 
 app.get("/callback", callback_schema, async (req, res) => {
-  if (req.query.error) {
-    res.view("finish", {
+  if ("error" in req.query) {
+    return res.view("finish", {
       title: "連携エラー",
       message:
         "認証連携が中断されました。本サービスに登録したい場合は、もう一度トップページから進んでください。",
     });
-  }
+  } else {
+    if (req.query.state !== req.session.state) {
+      console.log("Invalid state:", req.query.state, req.session.state);
+      req.session.state = undefined;
+      return res.status(400).view("error", {
+        message: "Invalid request",
+      });
+    }
 
-  if (
-    !req.query.state ||
-    !req.query.code ||
-    !req.session.state ||
-    req.query.state !== req.session.state
-  ) {
+    // 2回目からのアクセスはstateを削除
     req.session.state = undefined;
-    return res.status(400).view("error", {
-      message: "Invalid request",
-    });
-  }
 
-  // 2回目からのアクセスはstateを削除
-  req.session.state = undefined;
+    try {
+      const tokenResponse = await axios.post(
+        "https://notify-bot.line.me/oauth/token",
+        querystring.stringify({
+          code: req.query.code,
+          client_id: process.env.LINE_NOTIFY_CLIENT_ID,
+          client_secret: process.env.LINE_NOTIFY_CLIENT_SECRET,
+          redirect_uri: process.env.REDIRECT_URI,
+          grant_type: "authorization_code",
+        }),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
 
-  try {
-    const code = req.query.code as string;
-    const tokenResponse = await axios.post(
-      "https://notify-bot.line.me/oauth/token",
-      querystring.stringify({
-        code,
-        client_id: process.env.LINE_NOTIFY_CLIENT_ID,
-        client_secret: process.env.LINE_NOTIFY_CLIENT_SECRET,
-        redirect_uri: process.env.REDIRECT_URI,
-        grant_type: "authorization_code",
-      }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+      const accessToken = tokenResponse.data.access_token;
+      console.log("LINE Notify Access Token:", accessToken);
+      // データベースにトークンと関連情報を保存
+      const result = await prisma.line_notify_tokens.create({
+        data: {
+          token: accessToken,
+          access_time: new Date(),
+          ip_address: req.ip || "", // Set a default value of an empty string if req.ip is undefined
+          user_agent: req.headers["user-agent"] || "",
         },
-      }
-    );
+      });
 
-    const accessToken = tokenResponse.data.access_token;
-    console.log("LINE Notify Access Token:", accessToken);
-    // データベースにトークンと関連情報を保存
-    const result = await prisma.line_notify_tokens.create({
-      data: {
-        token: accessToken,
-        access_time: new Date(),
-        ip_address: req.ip || "", // Set a default value of an empty string if req.ip is undefined
-        user_agent: req.headers["user-agent"] || "",
-      },
-    });
+      req.session.tokenId = result.id;
+      req.session.token = accessToken;
 
-    req.session.tokenId = result.id;
-    req.session.token = accessToken;
+      // CSRFトークンを生成
+      const csrfToken = generateRandomString();
+      req.session.csrfToken = csrfToken;
 
-    // CSRFトークンを生成
-    const csrfToken = generateRandomString();
-    req.session.csrfToken = csrfToken;
-
-    res.view("select", {
-      title: "通知内容の選択",
-      message:
-        "通知を受け取りたいお知らせの学年を選択してください。本ページで回答せずに閉じると、すべてのお知らせが通知されます。",
-      csrfToken: csrfToken,
-    });
-  } catch (error) {
-    console.error("Error saving token to database: " + error);
-    res.status(500).view("finish", {
-      title: "エラー",
-      message:
-        "連携情報を保存するのに失敗しました。しばらく時間をおいてもう一度お試しください。",
-    });
+      return res.view("select.pug", {
+        title: "通知内容の選択",
+        message:
+          "通知を受け取りたいお知らせの学年を選択してください。本ページで回答せずに閉じると、すべてのお知らせが通知されます。",
+        csrfToken: csrfToken,
+      });
+    } catch (error) {
+      console.error("Error saving token to database: " + error);
+      return res.status(500).view("finish.pug", {
+        title: "エラー",
+        message:
+          "連携情報を保存するのに失敗しました。しばらく時間をおいてもう一度お試しください。",
+      });
+    }
   }
 });
 
@@ -203,7 +198,6 @@ const finish_schema = {
       notify_type: Type.String(),
       _csrf: Type.String(),
     }),
-    required: ["notify_type", "_csrf"],
   },
 };
 
