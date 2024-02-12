@@ -1,8 +1,16 @@
-import express from "express";
+// Fastify
+import fastify from "fastify";
+import fastifySession from "@fastify/session";
+import fastifyCookie from "@fastify/cookie";
+import fastifyView from "@fastify/view";
+import fastifyFormBody from "@fastify/formbody";
+import fastifyStatic from "@fastify/static";
+import { Type, TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
+// OAuth周りの処理用
 import axios from "axios";
 import * as querystring from "querystring";
+// Redis
 import RedisStore from "connect-redis";
-import session from "express-session";
 import { Redis } from "ioredis";
 import crypto from "crypto";
 import path from "path";
@@ -15,8 +23,11 @@ const prisma = new PrismaClient();
 
 const ENV_PATH = path.join(__dirname, "/../.env");
 dotenv.config({ path: ENV_PATH });
-const app = express();
-const port = process.env.PORT || 3000;
+const app = fastify({
+  logger: true,
+  trustProxy: "127.0.0.1",
+}).withTypeProvider<TypeBoxTypeProvider>();
+const port = parseInt(process.env.PORT || "3000");
 
 const redisClient = new Redis(
   process.env.REDIS_URL || "redis://localhost:6379"
@@ -26,42 +37,44 @@ redisClient.on("error", (error) => {
   process.exit(1);
 });
 
-const redisStore = new RedisStore({
-  client: redisClient,
-});
-
-declare module "express-session" {
-  interface SessionData {
-    state: string;
+declare module "@fastify/session" {
+  interface FastifySessionObject {
+    state: string | undefined;
     csrfToken: string;
     tokenId: number;
     token: string;
   }
 }
 
-app.use(
-  session({
-    name: "session",
-    secret: process.env.SESSION_SECRET || "your-secret-key",
-    resave: false,
-    saveUninitialized: true,
-    store: redisStore,
-  })
-);
-app.set("view engine", "pug");
+// session
+app.register(fastifyCookie);
+app.register(fastifySession, {
+  cookieName: "session",
+  secret: process.env.SESSION || "your-secret-key-must-be-at-least-32-characters-long",
+  saveUninitialized: true,
+  store: new RedisStore({ client: redisClient }),
+});
+// view engine
+app.register(fastifyView, {
+  engine: {
+    pug: require("pug"),
+  },
+  root: path.join(__dirname, "../views"),
+});
 
 function generateRandomString() {
   return crypto.randomBytes(20).toString("hex");
 }
 
-app.set("trust proxy", "loopback");
 // publicディレクトリを公開
-app.use(express.static(path.join(__dirname, "../public")));
+app.register(fastifyStatic, {
+  root: path.join(__dirname, "../public"),
+});
 
-app.use(express.urlencoded({ extended: true }));
+app.register(fastifyFormBody);
 
 app.get("/", (req, res) => {
-  res.render("index");
+  res.view("index.pug");
 });
 
 app.get("/auth", (req, res) => {
@@ -69,7 +82,7 @@ app.get("/auth", (req, res) => {
   if (req.session) {
     req.session.state = state;
   } else {
-    res.status(400).render("error", {
+    res.status(400).view("error", {
       message: "Invalid session",
     });
   }
@@ -85,9 +98,24 @@ app.get("/auth", (req, res) => {
   res.redirect(`https://notify-bot.line.me/oauth/authorize?${params}`);
 });
 
-app.get("/callback", async (req, res) => {
+const callback_schema = {
+  schema: {
+    querystring: Type.Object({
+      error: Type.String(),
+      code: Type.String(),
+      state: Type.String(),
+    }),
+    required: {
+      querystring: {
+        oneOf: [["code", "state"], ["error"]],
+      },
+    },
+  },
+};
+
+app.get("/callback", callback_schema, async (req, res) => {
   if (req.query.error) {
-    return res.render("finish", {
+    res.view("finish", {
       title: "連携エラー",
       message:
         "認証連携が中断されました。本サービスに登録したい場合は、もう一度トップページから進んでください。",
@@ -101,7 +129,7 @@ app.get("/callback", async (req, res) => {
     req.query.state !== req.session.state
   ) {
     req.session.state = undefined;
-    return res.status(400).render("error", {
+    return res.status(400).view("error", {
       message: "Invalid request",
     });
   }
@@ -146,7 +174,7 @@ app.get("/callback", async (req, res) => {
     const csrfToken = generateRandomString();
     req.session.csrfToken = csrfToken;
 
-    res.render("select", {
+    res.view("select", {
       title: "通知内容の選択",
       message:
         "通知を受け取りたいお知らせの学年を選択してください。本ページで回答せずに閉じると、すべてのお知らせが通知されます。",
@@ -154,7 +182,7 @@ app.get("/callback", async (req, res) => {
     });
   } catch (error) {
     console.error("Error saving token to database: " + error);
-    res.status(500).render("finish", {
+    res.status(500).view("finish", {
       title: "エラー",
       message:
         "連携情報を保存するのに失敗しました。しばらく時間をおいてもう一度お試しください。",
@@ -162,9 +190,19 @@ app.get("/callback", async (req, res) => {
   }
 });
 
-app.post("/finish", async (req, res) => {
+const finish_schema = {
+  schema: {
+    body: Type.Object({
+      notify_type: Type.String(),
+      _csrf: Type.String(),
+    }),
+    required: ["notify_type", "_csrf"],
+  },
+};
+
+app.post("/finish", finish_schema, async (req, res) => {
   if (!req.session || !req.body || req.body._csrf !== req.session.csrfToken) {
-    return res.status(400).render("error", {
+    return res.status(400).view("error", {
       message: "CSRF verification failed",
     });
   }
@@ -175,13 +213,13 @@ app.post("/finish", async (req, res) => {
       Number(req.body.notify_type)
     )
   ) {
-    return res.status(400).render("error", {
+    return res.status(400).view("error", {
       message: "Invalid request",
     });
   }
 
   if (!req.session.tokenId || !req.session.token) {
-    return res.status(400).render("error", {
+    return res.status(400).view("error", {
       message: "Invalid session",
     });
   }
@@ -218,7 +256,7 @@ app.post("/finish", async (req, res) => {
       `通知設定が完了しました。${message}毎日18時にお知らせを配信します。`
     );
 
-    res.render("finish", {
+    res.view("finish", {
       title: "連携完了",
       message:
         "連携しました。お知らせは毎日18時に配信されます。このページは閉じて問題ありません。",
@@ -226,7 +264,7 @@ app.post("/finish", async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating notify_type to database: " + error);
-    res.status(500).render("finish", {
+    res.status(500).view("finish", {
       title: "エラー",
       message:
         "通知内容を保存するのに失敗しました。すべてのお知らせが通知されます。希望しない場合は、一度登録を解除してもう一度登録し直してください。",
@@ -234,6 +272,7 @@ app.post("/finish", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
+app.listen({ port }, (err) => {
+  if (err) throw err;
   console.log(`App is running on port ${port}`);
 });
