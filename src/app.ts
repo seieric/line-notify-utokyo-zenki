@@ -73,6 +73,13 @@ app.register(fastifyStatic, {
 
 app.register(fastifyFormBody);
 
+app.setErrorHandler((error, req, res) => {
+  req.log.error(error);
+  res.status(error.statusCode || 500).view("error", {
+    message: error.message,
+  });
+});
+
 app.get("/", (req, res) => {
   res.view("index.pug");
 });
