@@ -64,6 +64,7 @@ declare module "@fastify/session" {
     csrfToken: string;
     tokenId: number;
     token: string;
+    trackingTag: string;
   }
 }
 
@@ -98,6 +99,30 @@ app.setErrorHandler((error, req, res) => {
 app.get("/", (req, res) => {
   res.view("index.pug");
 });
+
+app.get(
+  "/t/:name",
+  {
+    schema: {
+      params: Type.Object({
+        name: Type.String(),
+      }),
+    },
+  },
+  async (req, res) => {
+    const trackingTag = await prisma.trackingTag.findFirst({
+      where: {
+        name: req.params.name,
+      },
+    });
+    if (!trackingTag) {
+      return res.status(404).send("Invalid parameter.")
+    } else {
+      req.session.trackingTag = req.params.name;
+      return res.redirect("/");
+    }
+  }
+);
 
 app.get("/auth", (req, res) => {
   const state = generateRandomString();
@@ -165,6 +190,29 @@ app.get(
         );
 
         const accessToken = tokenResponse.data.access_token;
+        const registrationHistory = await prisma.registrationHistory.create({
+          data: {
+            ip_address: req.ip || "",
+            user_agent: req.headers["user-agent"] || "",
+          }
+        });
+        if (req.session.trackingTag) {
+          const trackingTag = await prisma.trackingTag.findFirst({
+            where: {
+              name: req.session.trackingTag
+            }
+          });
+          if(trackingTag){
+            await prisma.registrationHistory.update({
+              where: {
+                id: registrationHistory.id
+              },
+              data: {
+                tracking_tag_id: trackingTag.id
+              }
+            });
+          }
+        }
         // データベースにトークンと関連情報を保存
         const result = await prisma.line_notify_tokens.create({
           data: {
