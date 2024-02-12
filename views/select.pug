@@ -25,12 +25,12 @@ block content
     input(type="hidden" name="_csrf", value=csrfToken)
     .form-group
       label(for="1stYear") 1年生
-      input(type="radio" name="notify_type" value="1" id="1stYear")
+      input(type="radio" name="notify_type" value="1" id="1stYear" required)
     .form-group
       label(for="2ndYear") 2年生
-      input(type="radio" name="notify_type" value="2" id="2ndYear")
+      input(type="radio" name="notify_type" value="2" id="2ndYear" required)
     .form-group
       label(for="all") すべて
-      input(type="radio" name="notify_type" value="0" id="all")
+      input(type="radio" name="notify_type" value="0" id="all" required)
     .form-group
       input(type="submit" value="決定" id="submitBtn")
