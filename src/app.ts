@@ -195,38 +195,26 @@ app.get("/callback", callback_schema, async (req, res) => {
 const finish_schema = {
   schema: {
     body: Type.Object({
-      notify_type: Type.String(),
+      notify_type: Type.Enum(NotifyType),
       _csrf: Type.String(),
     }),
   },
 };
 
 app.post("/finish", finish_schema, async (req, res) => {
-  if (!req.session || !req.body || req.body._csrf !== req.session.csrfToken) {
+  if (req.body._csrf !== req.session.csrfToken) {
     return res.status(400).view("error", {
       message: "CSRF verification failed",
     });
   }
 
-  if (
-    !req.body.notify_type ||
-    ![NotifyType.ALL, NotifyType.FIRST_YEAR, NotifyType.SECOND_YEAR].includes(
-      Number(req.body.notify_type)
-    )
-  ) {
-    return res.status(400).view("error", {
-      message: "Invalid request",
-    });
-  }
-
-  if (!req.session.tokenId || !req.session.token) {
+  if (req.session.tokenId === undefined || req.session.token === undefined) {
     return res.status(400).view("error", {
       message: "Invalid session",
     });
   }
 
-  // notify_typeを数字に変換
-  const notifyType = parseInt(req.body.notify_type);
+  const notifyType = req.body.notify_type;
   try {
     // 通知設定を反映
     await prisma.line_notify_tokens.update({
@@ -257,7 +245,7 @@ app.post("/finish", finish_schema, async (req, res) => {
       `通知設定が完了しました。${message}毎日18時にお知らせを配信します。`
     );
 
-    res.view("finish", {
+    return res.view("finish", {
       title: "連携完了",
       message:
         "連携しました。お知らせは毎日18時に配信されます。このページは閉じて問題ありません。",
@@ -265,7 +253,7 @@ app.post("/finish", finish_schema, async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating notify_type to database: " + error);
-    res.status(500).view("finish", {
+    return res.status(500).view("finish", {
       title: "エラー",
       message:
         "通知内容を保存するのに失敗しました。すべてのお知らせが通知されます。希望しない場合は、一度登録を解除してもう一度登録し直してください。",
