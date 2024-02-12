@@ -15,3 +15,22 @@ model line_notify_tokens {
   user_agent  String   @db.VarChar(255)
   notify_type Int      @default(0)
 }
+
+model RegistrationHistory {
+  id              Int         @id @default(autoincrement())
+  created_at      DateTime    @default(now()) @db.Timestamp(0)
+  ip_address      String      @db.VarChar(45)
+  user_agent      String      @db.VarChar(255)
+  notify_type     Int
+  tracking_tag    TrackingTag @relation(fields: [tracking_tag_id], references: [id])
+  tracking_tag_id Int
+}
+
+model TrackingTag {
+  id                  Int                   @id @default(autoincrement())
+  created_at          DateTime              @default(now()) @db.Timestamp(0)
+  name                String                @unique @db.VarChar(255)
+  RegistrationHistory RegistrationHistory[]
+
+  @@index([name])
+}
