@@ -1,8 +1,8 @@
 extends _layout
 block head
-  meta(name="description" content="東京大学教養学部前期課程HPのお知らせを毎日配信いたします。")
-  meta(property="og:title" content="お知らせLINE自動通知")
-  meta(property="og:description" content="東京大学教養学部前期課程HPのお知らせを毎日配信いたします。")
+  meta(name="description" content="前期課程HPのお知らせを毎日配LINEでLINEで配信いたします。")
+  meta(property="og:title" content="前期課程お知らせLINE通知登録")
+  meta(property="og:description" content="前期課程HPのお知らせを毎日配LINEでLINEで配信いたします。")
   style.
     #loginBtn{
       display: block;
@@ -26,7 +26,7 @@ block head
 
 block content 
   h1 お知らせLINE通知登録
-  p 教養学部前期課程HPのお知らせを毎日18時に配信いたします。<br>1日1回のチェックでお知らせを見逃さない！
+  p 教養学部前期課程HPのお知らせを毎日18時に配信します。学年別の配信にも対応。1日1回のチェックでお知らせを見逃さない！
   a(href="./auth" rel="nofollow noreferrer" id="loginBtn")
     span.large LINE通知を受け取る
     br
@@ -40,16 +40,16 @@ block content
   h2 プライバシーポリシー
   p 本サービスは以下の情報を個人が識別できない形で収集しています。
   ul
-    li LINE Notifyの認証トークン
+    li LINE Notifyのアクセストークン
     li アクセス解析のための登録日時・IPアドレス・ユーザーエージェント・登録元識別子
-  p アクセス解析を含め、以上の情報が<b>第三者に提供されることはありません</b>。
+  p 以上の情報が<b>第三者に提供されることはありません</b>。
   h2 免責事項
   p 本サービスは「気づかないお知らせを減らせたらいいな」という思いで作成しました。<br>そのため、以下の事項にお気をつけください。
   ul
     li 18時以降に追加されたお知らせは通知されません。
-    li 本サービスおよび教養学部HPの障害によりお知らせを通知できない可能性があります。
+    li システム障害等でお知らせを通知できない可能性があります。
     li 本サービスは予告なく終了する場合があります。
     li 本サービスは送信する通知の完全性、正確性を保証しません。
     li 本サービス運営者は利用者に生じた損害、損失について一切の責任を負いません。
-  h2 お問い合わせ
-  p 本サービスについてのお問い合わせはinfo&lt;at&gt;ut-notify.svrs.jpまでお願いいたします。
+  p お問合せ先 
+    a(href="mailto:info@ut-notify.svrs.jp") info@ut-notify.svrs.jp
