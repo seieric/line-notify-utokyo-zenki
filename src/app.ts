@@ -95,6 +95,13 @@ app.setErrorHandler((error, req, res) => {
   });
 });
 
+app.setNotFoundHandler((req, res) => {
+  res.status(404).view("error", {
+    title: "404 Not Found",
+    message: "お探しのページは見つかりませんでした。",
+  });
+});
+
 // routes
 app.get("/", (req, res) => {
   res.view("index.pug");
@@ -116,7 +123,7 @@ app.get(
       },
     });
     if (!trackingTag) {
-      return res.status(404).send("Invalid parameter.")
+      return res.status(404).send("Invalid parameter.");
     } else {
       req.session.touch();
       req.session.trackingTag = req.params.name;
@@ -195,22 +202,22 @@ app.get(
           data: {
             ip_address: req.ip || "",
             user_agent: req.headers["user-agent"] || "",
-          }
+          },
         });
         if (req.session.trackingTag) {
           const trackingTag = await prisma.trackingTag.findFirst({
             where: {
-              name: req.session.trackingTag
-            }
+              name: req.session.trackingTag,
+            },
           });
-          if(trackingTag){
+          if (trackingTag) {
             await prisma.registrationHistory.update({
               where: {
-                id: registrationHistory.id
+                id: registrationHistory.id,
               },
               data: {
-                tracking_tag_id: trackingTag.id
-              }
+                tracking_tag_id: trackingTag.id,
+              },
             });
           }
         }
