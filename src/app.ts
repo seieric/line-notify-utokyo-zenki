@@ -123,7 +123,7 @@ app.get(
       },
     });
     if (!trackingTag) {
-      return res.status(404).send("Invalid parameter.");
+      return res.callNotFound();
     } else {
       req.session.touch();
       req.session.trackingTag = req.params.name;
