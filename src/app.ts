@@ -82,7 +82,6 @@ app.register(fastifyStatic, {
   root: path.join(__dirname, "../public"),
   cacheControl: true,
   maxAge: "7d",
-  immutable: true,
 });
 
 // x-www-form-urlencodedに対応
