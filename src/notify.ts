@@ -7,6 +7,7 @@ import ZenkiNewsFetcher from "./lib/zenki/NewsFetcher";
 import { NotifyCycle } from "./lib/NotifyCycle";
 import { PrismaClient } from "@prisma/client";
 import DailyMessagesGenerator from "./lib/notify/DailyMessagesGenerator";
+import RealtimeMessagesGenerator from "./lib/notify/RealtimeMessagesGenerator";
 import { program } from "commander";
 program
   .option("-d, --daily", "Send daily notifications")
@@ -75,7 +76,29 @@ async function main() {
       console.error("Error querying tokens from database:", error);
     }
   } else if (options.realtime) {
-    console.log("Not implemented yet");
+    const generator = new RealtimeMessagesGenerator(newsItems, MESSAGE_FOOTER, prisma);
+    const messages = await generator.generate();
+    try {
+      const results = await prisma.line_notify_tokens.findMany({
+        select: {
+          id: true,
+          token: true,
+          notify_type: true,
+        },
+        where: {
+          notify_cycle: NotifyCycle.Realtime,
+        },
+      });
+
+      for (const result of results) {
+        const message = messages[result.notify_type];
+        if (message) {
+          await notify(result.token, message, result.id);
+        }
+      }
+    } catch (error) {
+      console.error("Error querying tokens from database:", error);
+    }
   } else {
     console.error("You must specify either --daily or --realtime");
     process.exit(1);
