@@ -4,8 +4,16 @@ const ENV_PATH = path.join(__dirname, "/../.env");
 dotenv.config({ path: ENV_PATH });
 import LINENotify from "./lib/LINENotify";
 import ZenkiNewsFetcher from "./lib/zenki/NewsFetcher";
-import { NotifyType } from "./lib/zenki/NotifyType";
+import { NotifyCycle } from "./lib/NotifyCycle";
 import { PrismaClient } from "@prisma/client";
+import DailyMessagesGenerator from "./lib/notify/DailyMessagesGenerator";
+import { program } from "commander";
+program
+  .option("-d, --daily", "Send daily notifications")
+  .option("-r, --realtime", "Send realtime notifications")
+  .parse(process.argv);
+const options = program.opts();
+
 const prisma = new PrismaClient();
 
 const MESSAGE_FOOTER = "\n連携解除はこちら(https://notify-bot.line.me/my/)";
@@ -42,48 +50,36 @@ async function main() {
   const newsItems = await newsFetcher.fetch();
   if (newsItems.length == 0) return;
 
-  let messages: string[] = [];
+  if (options.daily) {
+    const generator = new DailyMessagesGenerator(newsItems, MESSAGE_FOOTER);
+    const messages = generator.generate();
+    try {
+      const results = await prisma.line_notify_tokens.findMany({
+        select: {
+          id: true,
+          token: true,
+          notify_type: true,
+        },
+        where: {
+          notify_cycle: NotifyCycle.Daily,
+        },
+      });
 
-  for (const type of [
-    NotifyType.ALL,
-    NotifyType.FIRST_YEAR,
-    NotifyType.SECOND_YEAR,
-  ]) {
-    let message = "";
-    for (const item of newsItems) {
-      if (
-        item.isType(type) &&
-        item.isNotOlderThan(new Date(new Date().setHours(0, 0, 0, 0)))
-      ) {
-        message += item.toString() + "\n";
+      for (const result of results) {
+        const message = messages[result.notify_type];
+        if (message) {
+          await notify(result.token, message, result.id);
+        }
       }
+    } catch (error) {
+      console.error("Error querying tokens from database:", error);
     }
-
-    if (message === "") continue;
-
-    message += MESSAGE_FOOTER;
-    messages.push(message);
+  } else if (options.realtime) {
+    console.log("Not implemented yet");
+  } else {
+    console.error("You must specify either --daily or --realtime");
+    process.exit(1);
   }
-
-  try {
-    const results = await prisma.line_notify_tokens.findMany({
-      select: {
-        id: true,
-        token: true,
-        notify_type: true,
-      },
-    });
-
-    for (const result of results) {
-      if (messages[result.notify_type]) {
-        await notify(result.token, messages[result.notify_type], result.id);
-      }
-    }
-  } catch (error) {
-    console.error("Error querying tokens from database:", error);
-  }
-
-  process.exit(0);
 }
 
 main();

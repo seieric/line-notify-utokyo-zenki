@@ -1,10 +1,10 @@
 import { NotifyType } from "./NotifyType";
 
 export default class NewsItem {
-  private title: string;
-  private link: string | undefined;
-  private type: NotifyType;
-  private date: Date;
+  public title: string;
+  public link: string | undefined;
+  public type: NotifyType;
+  public date: Date;
 
   constructor(
     title: string,

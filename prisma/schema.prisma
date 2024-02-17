@@ -8,19 +8,20 @@ datasource db {
 }
 
 model line_notify_tokens {
-  id          Int      @id @default(autoincrement())
-  token       String   @db.VarChar(255)
-  access_time DateTime @db.Timestamp(0)
-  ip_address  String   @db.VarChar(45)
-  user_agent  String   @db.VarChar(255)
-  notify_type Int      @default(0)
+  id           Int      @id @default(autoincrement())
+  token        String   @db.VarChar(255)
+  access_time  DateTime @db.Timestamp(0)
+  ip_address   String   @db.VarChar(45)
+  user_agent   String   @db.VarChar(255)
+  notify_type  Int      @default(0)
+  notify_cycle Int      @default(0)
 }
 
 model RegistrationHistory {
-  id              Int         @id @default(autoincrement())
-  created_at      DateTime    @default(now()) @db.Timestamp(0)
-  ip_address      String      @db.VarChar(45)
-  user_agent      String      @db.VarChar(255)
+  id              Int          @id @default(autoincrement())
+  created_at      DateTime     @default(now()) @db.Timestamp(0)
+  ip_address      String       @db.VarChar(45)
+  user_agent      String       @db.VarChar(255)
   tracking_tag    TrackingTag? @relation(fields: [tracking_tag_id], references: [id])
   tracking_tag_id Int?
 }
@@ -32,4 +33,13 @@ model TrackingTag {
   RegistrationHistory RegistrationHistory[]
 
   @@index([name])
+}
+
+model NewsItem {
+  id         Int      @id @default(autoincrement())
+  title      String   @db.VarChar(255)
+  link       String   @db.VarChar(255)
+  type       Int      @default(0)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @updatedAt @db.Timestamp(0)
 }
