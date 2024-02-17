@@ -23,6 +23,7 @@ block content
   p= message
   form(action="./finish" method="post")
     input(type="hidden" name="_csrf", value=csrfToken)
+    h2 通知するお知らせの学年
     .form-group
       label(for="1stYear") 1年生
       input(type="radio" name="notify_type" value="1" id="1stYear" required)
@@ -32,5 +33,12 @@ block content
     .form-group
       label(for="all") すべて
       input(type="radio" name="notify_type" value="0" id="all" required)
+    h2 通知頻度
+    .form-group
+      label(for="daily") 1日1回まとめて(18時)
+      input(type="radio" name="notify_cycle" value="0" id="daily" required default checked)
+    .form-group
+      label(for="realtime") 掲載されたらすぐに
+      input(type="radio" name="notify_cycle" value="1" id="realtime" required)
     .form-group
       input(type="submit" value="決定" id="submitBtn")

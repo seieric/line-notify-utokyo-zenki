@@ -17,6 +17,7 @@ import path from "path";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 import { NotifyType } from "./lib/zenki/NotifyType";
+import { NotifyCycle } from "./lib/NotifyCycle";
 import LINENotify from "./lib/LINENotify";
 const notify = new LINENotify();
 const prisma = new PrismaClient();
@@ -241,7 +242,7 @@ app.get(
         return res.view("select.pug", {
           title: "通知内容の選択",
           message:
-            "通知を受け取りたいお知らせの学年を選択してください。本ページで回答せずに閉じると、すべてのお知らせが通知されます。",
+            "通知を受け取りたいお知らせの学年・通知頻度を選択してください。本ページで回答せずに閉じると、すべてのお知らせが1日1回まとめて通知されます。",
           csrfToken: csrfToken,
         });
       } catch (error) {
@@ -262,6 +263,7 @@ app.post(
     schema: {
       body: Type.Object({
         notify_type: Type.Enum(NotifyType),
+        notify_cycle: Type.Enum(NotifyCycle),
         _csrf: Type.String(),
       }),
     },
@@ -280,6 +282,7 @@ app.post(
     }
 
     const notifyType = req.body.notify_type;
+    const notifyCycle = req.body.notify_cycle;
     try {
       // 通知設定を反映
       await prisma.line_notify_tokens.update({
@@ -288,32 +291,42 @@ app.post(
         },
         data: {
           notify_type: notifyType,
+          notify_cycle: notifyCycle,
         },
       });
 
-      let message = "";
+      let message = "以下の内容で通知設定が完了しました。\n";
       switch (notifyType) {
         case NotifyType.FIRST_YEAR:
-          message = "1年生向けのお知らせを通知します。";
+          message += "通知するお知らせ: 1年生向け\n";
           break;
         case NotifyType.SECOND_YEAR:
-          message = "2年生向けのお知らせを通知します。";
+          message += "通知するお知らせ: 2年生向け\n";
           break;
         case NotifyType.ALL:
         default:
-          message = "すべてのお知らせを通知します。";
+          message += "通知するお知らせ: すべて\n";
+          break;
+      }
+      switch (notifyCycle) {
+        case NotifyCycle.Realtime:
+          message += "通知頻度: 掲載されたらすぐに";
+          break;
+        case NotifyCycle.Daily:
+        default:
+          message += "通知頻度: 1日1回まとめて(18時)";
           break;
       }
 
       await notify.notify(
         req.session.token,
-        `通知設定が完了しました。${message}毎日18時にお知らせを配信します。`
+        message,
       );
 
       return res.view("finish", {
         title: "連携完了",
         message:
-          "連携しました。お知らせは毎日18時に配信されます。このページは閉じて問題ありません。",
+          "連携しました。このページは閉じて問題ありません。",
         isHideLink: true,
       });
     } catch (error) {
