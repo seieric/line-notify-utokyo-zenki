@@ -96,7 +96,7 @@ app.setNotFoundHandler((req, res) => {
 // routes
 app.register(indexRoutes);
 app.register(trackingRoutes);
-app.register(authRoutes);
+app.register(authRoutes, { prefix: "/auth" });
 
 const port = parseInt(process.env.PORT || "3000");
 app.listen({ port }, (err) => {

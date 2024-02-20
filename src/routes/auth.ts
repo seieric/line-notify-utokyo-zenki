@@ -16,7 +16,7 @@ function generateRandomString() {
 }
 
 const authRoutes: FastifyPluginAsyncTypebox = async function (fastify) {
-  fastify.get("/auth", (req, res) => {
+  fastify.get("/redirect", (req, res) => {
     const state = generateRandomString();
     req.session.state = state;
 
