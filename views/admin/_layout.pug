@@ -1,0 +1,13 @@
+doctype html
+html(lang="ja")
+  head
+    if title
+      title= title + " | お知らせLINE通知登録管理画面"
+    else
+      title お知らせLINE通知登録管理画面
+    meta(name="viewport", content="width=device-width,initial-scale=1.0")
+    link(rel="icon" href="/favicon.svg" type="image/svg+xml")
+    link(rel="stylesheet", href="/assets/light.min.css")
+    block head
+  body
+    block content

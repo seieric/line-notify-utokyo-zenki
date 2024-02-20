@@ -1,0 +1,32 @@
+extends _layout
+block content
+  h1 お知らせん管理(システム)
+  p システムのお知らせを登録・編集・削除します。
+  // announcement list
+  h2 お知らせ一覧
+  table
+    thead
+      tr
+        th ID
+        th タイトル
+        th 内容
+        th 送信日時
+        th 作成日時
+        th 更新日時
+        th LINE通知
+        th 編集
+        th 削除
+    tbody
+      each announcement in announcements
+        tr
+          td= announcement.id
+          td= announcement.title
+          td= announcement.content
+          td= announcement.sent_at
+          td= announcement.created_at
+          td= announcement.updated_at
+          td
+            a(href=`./announcement/${announcement.id}`) 編集
+          td
+            form(method="post" action=`./announcement/${announcement.id}?_method=DELETE`)
+              input(type="submit" value="削除")

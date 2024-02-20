@@ -5,6 +5,8 @@ import fastifyCookie from "@fastify/cookie";
 import fastifyView from "@fastify/view";
 import fastifyFormBody from "@fastify/formbody";
 import fastifyStatic from "@fastify/static";
+import fastifyAuth from "@fastify/auth";
+import fastifyBasicAuth from "@fastify/basic-auth";
 import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 // Redis
 import RedisStore from "connect-redis";
@@ -18,6 +20,7 @@ dotenv.config({ path: ENV_PATH });
 import trackingRoutes from "./routes/t";
 import indexRoutes from "./routes/index";
 import authRoutes from "./routes/auth";
+import adminRoutes from "./routes/admin";
 
 // initialize fastify
 const app = fastify({
@@ -78,6 +81,19 @@ app.register(fastifyStatic, {
 // x-www-form-urlencodedに対応
 app.register(fastifyFormBody);
 
+// Basic Auth
+app.register(fastifyAuth);
+app.register(fastifyBasicAuth, {
+  validate: async (username, password, req, res) => {
+    if (
+      username !== process.env.ADMIN_USER ||
+      password !== process.env.ADMIN_PASSWORD
+    )
+      return new Error("Unauthorized");
+  },
+  authenticate: { realm: "Admin Only" },
+});
+
 // カスタムエラーページ
 app.setErrorHandler((error, req, res) => {
   req.log.error(error);
@@ -97,6 +113,7 @@ app.setNotFoundHandler((req, res) => {
 app.register(indexRoutes);
 app.register(trackingRoutes);
 app.register(authRoutes, { prefix: "/auth" });
+app.register(adminRoutes, { prefix: "/admin/" });
 
 const port = parseInt(process.env.PORT || "3000");
 app.listen({ port }, (err) => {
