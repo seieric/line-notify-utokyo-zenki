@@ -78,14 +78,34 @@ const adminRoutes: FastifyPluginAsyncTypebox = async function (fastify) {
           params: Type.Object({
             id: Type.Number(),
           }),
-          body: Type.Object({
-            title: Type.String(),
-            content: Type.String(),
-            send_at: Type.String({ format: "date" }),
-          }),
+          body: Type.Union([
+            Type.Object({
+              title: Type.String(),
+              content: Type.String(),
+              send_at: Type.String({ format: "date" }),
+              _method: Type.Literal("PUT"),
+            }),
+            Type.Object({
+              _method: Type.Literal("DELETE"),
+            }),
+          ]),
         },
       },
       async (req, res) => {
+        if (req.body._method === "DELETE") {
+          const announcement = await prisma.announcement.findUnique({
+            where: {
+              id: req.params.id,
+            },
+          });
+          if (!announcement) return res.status(404).send("Not Found");
+          await prisma.announcement.delete({
+            where: {
+              id: req.params.id,
+            },
+          });
+          return res.redirect(302, "/admin/announcement");
+        }
         const { title, content, send_at } = req.body;
         const announcement = await prisma.announcement.update({
           where: {

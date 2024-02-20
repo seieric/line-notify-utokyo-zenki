@@ -36,5 +36,6 @@ block content
           td
             a(href=`/admin/announcement/${announcement.id}`) 編集
           td
-            form(method="post" action=`/admin/announcement/${announcement.id}?_method=DELETE`)
+            form(method="post" action=`/admin/announcement/${announcement.id}`)
+              input(type="hidden" name="_method" value="DELETE")
               input(type="submit" value="削除")

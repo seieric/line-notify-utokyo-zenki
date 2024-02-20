@@ -9,4 +9,5 @@ block content
     textarea(name="content")= announcement.content
     label(for="send_at") 送信日時
     input(type="date" name="send_at" value=send_at)
+    input(type="hidden" name="_method" value="PUT")
     input(type="submit" value="更新")
