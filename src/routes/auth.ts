@@ -157,6 +157,7 @@ const authRoutes: FastifyPluginAsyncTypebox = async function (fastify) {
           message: "CSRF verification failed",
         });
       }
+      req.session.csrfToken = "";
 
       if (
         req.session.tokenId === undefined ||
