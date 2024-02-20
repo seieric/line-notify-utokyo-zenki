@@ -1,7 +1,16 @@
 extends _layout
 block content
-  h1 お知らせん管理(システム)
+  h1 お知らせ管理(システム)
   p システムのお知らせを登録・編集・削除します。
+  h2 お知らせ登録
+  form(action="" method="post")
+    label(for="title") タイトル
+    input(type="text" name="title")
+    label(for="content") 内容
+    textarea(name="content")
+    label(for="send_at") 送信日時
+    input(type="date" name="send_at")
+    input(type="submit" value="登録")
   // announcement list
   h2 お知らせ一覧
   table
@@ -21,11 +30,11 @@ block content
           td= announcement.id
           td= announcement.title
           td= announcement.content
-          td= announcement.sent_at
+          td= announcement.send_at
           td= announcement.created_at
           td= announcement.updated_at
           td
-            a(href=`./announcement/${announcement.id}`) 編集
+            a(href=`/admin/announcement/${announcement.id}`) 編集
           td
-            form(method="post" action=`./announcement/${announcement.id}?_method=DELETE`)
+            form(method="post" action=`/admin/announcement/${announcement.id}?_method=DELETE`)
               input(type="submit" value="削除")

@@ -1,0 +1,12 @@
+extends _layout
+block content
+  h1 お知らせ詳細(ID: #{announcement.id})
+  a(href="/admin/announcement") 一覧に戻る
+  form(action=`/admin/announcement/${announcement.id}` method="post")
+    label(for="title") タイトル
+    input(type="text" name="title" value=announcement.title)
+    label(for="content") 内容
+    textarea(name="content")= announcement.content
+    label(for="send_at") 送信日時
+    input(type="date" name="send_at" value=send_at)
+    input(type="submit" value="更新")
