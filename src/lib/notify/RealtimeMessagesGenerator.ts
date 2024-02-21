@@ -18,7 +18,11 @@ export default class RealtimeMessagesGenerator {
     messageFooter: string,
     prisma: PrismaClient
   ) {
-    this.newsItems = freshNewsItems;
+    this.newsItems = [];
+    for (const item of freshNewsItems) {
+      if (item.isNotOlderThan(new Date(new Date().setHours(0, 0, 0, 0))))
+        this.newsItems.push(item);
+    }
     this.messageFooter = messageFooter;
     this.prisma = prisma;
   }
@@ -78,7 +82,7 @@ export default class RealtimeMessagesGenerator {
     ]) {
       let message = "";
       for (const item of updatedNewsItemsInfo.new) {
-        if (item.isType(type) && item.isNotOlderThan(new Date())) {
+        if (item.isType(type) && item.isNotOlderThan(new Date(new Date().setHours(0, 0, 0, 0)))) {
           message += item.toString() + "\n";
         }
       }
@@ -89,7 +93,7 @@ export default class RealtimeMessagesGenerator {
         if (!originalItem) continue;
 
         const isNotified = originalItem.type == NotifyType.ALL || originalItem.type == type;
-        if (!isNotified && !item.isType(type) && item.isNotOlderThan(new Date())) {
+        if (!isNotified && !item.isType(type) && item.isNotOlderThan(new Date(new Date().setHours(0, 0, 0, 0)))) {
           message += item.toString() + "\n";
         }
       }
