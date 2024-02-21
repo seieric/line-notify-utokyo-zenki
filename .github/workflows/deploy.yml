@@ -4,14 +4,19 @@ on:
   push:
     branches:
       - main
+      - staging
 
 jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    environment:
-      name: production
+    environment: 
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
     steps:
+      - name: info
+        run: >
+          echo "Deploying to ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }} environment"
+          echo "Build number: ${{ github.run_number }}"
       - name: ssh
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -19,4 +24,4 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key	: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          script: cd ${{ secrets.SSH_PROJECT_DIR }} && git pull && npm install && npx prisma migrate deploy && npx prisma generate && npx tsc && pm2 restart ecosystem.config.js --env production
+          script: cd ${{ secrets.SSH_PROJECT_DIR }} && git pull && npm install && npx prisma migrate deploy && npx prisma generate && npx tsc && pm2 restart ecosystem.config.js --env ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
