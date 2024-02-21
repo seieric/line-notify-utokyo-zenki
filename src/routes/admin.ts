@@ -3,7 +3,6 @@ import {
   FastifyPluginAsyncTypebox,
 } from "@fastify/type-provider-typebox";
 import prisma from "../lib/db";
-import { send } from "process";
 
 const adminRoutes: FastifyPluginAsyncTypebox = async function (fastify) {
   fastify.after(() => {
