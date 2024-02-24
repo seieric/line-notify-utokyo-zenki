@@ -84,6 +84,7 @@ async function main() {
       MESSAGE_FOOTER,
       prisma
     );
+    await generator.update();
     const messages = await generator.generate();
     try {
       const results = await prisma.line_notify_tokens.findMany({
@@ -120,9 +121,9 @@ async function main() {
         accessToken: process.env.X_ACCESS_TOKEN,
         accessSecret: process.env.X_ACCESS_SECRET,
       });
-      const message = messages[NotifyType.ALL];
-      if (message) {
-        await XClient.v2.tweet(message);
+      const posts = await generator.generateForX();
+      for (const post of posts) {
+        await XClient.v2.tweet(post);
       }
     }
   } else {
