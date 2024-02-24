@@ -3,8 +3,10 @@ import dotenv from "dotenv";
 const ENV_PATH = path.join(__dirname, "/../.env");
 dotenv.config({ path: ENV_PATH });
 import LINENotify from "./lib/LINENotify";
+import { TwitterApi } from "twitter-api-v2";
 import ZenkiNewsFetcher from "./lib/zenki/NewsFetcher";
 import { NotifyCycle } from "./lib/NotifyCycle";
+import { NotifyType } from "./lib/zenki/NotifyType";
 import { PrismaClient } from "@prisma/client";
 import DailyMessagesGenerator from "./lib/notify/DailyMessagesGenerator";
 import RealtimeMessagesGenerator from "./lib/notify/RealtimeMessagesGenerator";
@@ -12,6 +14,7 @@ import { program } from "commander";
 program
   .option("-d, --daily", "Send daily notifications")
   .option("-r, --realtime", "Send realtime notifications")
+  .option("-x, --with-x", "Also send realtime notifications via X ")
   .parse(process.argv);
 const options = program.opts();
 
@@ -76,7 +79,11 @@ async function main() {
       console.error("Error querying tokens from database:", error);
     }
   } else if (options.realtime) {
-    const generator = new RealtimeMessagesGenerator(newsItems, MESSAGE_FOOTER, prisma);
+    const generator = new RealtimeMessagesGenerator(
+      newsItems,
+      MESSAGE_FOOTER,
+      prisma
+    );
     const messages = await generator.generate();
     try {
       const results = await prisma.line_notify_tokens.findMany({
@@ -98,6 +105,25 @@ async function main() {
       }
     } catch (error) {
       console.error("Error querying tokens from database:", error);
+    }
+
+    if (
+      options.withX &&
+      process.env.X_API_KEY &&
+      process.env.X_API_SECRET &&
+      process.env.X_ACCESS_TOKEN &&
+      process.env.X_ACCESS_SECRET
+    ) {
+      const XClient = new TwitterApi({
+        appKey: process.env.X_API_KEY,
+        appSecret: process.env.X_API_SECRET,
+        accessToken: process.env.X_ACCESS_TOKEN,
+        accessSecret: process.env.X_ACCESS_SECRET,
+      });
+      const message = messages[NotifyType.ALL];
+      if (message) {
+        await XClient.v2.tweet(message);
+      }
     }
   } else {
     console.error("You must specify either --daily or --realtime");
