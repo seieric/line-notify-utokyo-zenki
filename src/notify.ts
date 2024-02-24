@@ -6,7 +6,6 @@ import LINENotify from "./lib/LINENotify";
 import { TwitterApi } from "twitter-api-v2";
 import ZenkiNewsFetcher from "./lib/zenki/NewsFetcher";
 import { NotifyCycle } from "./lib/NotifyCycle";
-import { NotifyType } from "./lib/zenki/NotifyType";
 import { PrismaClient } from "@prisma/client";
 import DailyMessagesGenerator from "./lib/notify/DailyMessagesGenerator";
 import RealtimeMessagesGenerator from "./lib/notify/RealtimeMessagesGenerator";
