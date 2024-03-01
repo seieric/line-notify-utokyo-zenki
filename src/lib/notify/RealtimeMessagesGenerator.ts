@@ -124,7 +124,7 @@ export default class RealtimeMessagesGenerator {
 
     for (const item of updatedNewsItemsInfo.new) {
       if (item.isNotOlderThan(new Date(new Date().setHours(0, 0, 0, 0))))
-        posts.push(item.toString() + "\m" + this._generateNotifyTypeTag(item.type));
+        posts.push(item.toString() + "\n" + this._generateNotifyTypeTag(item.type));
     }
     for (const item of updatedNewsItemsInfo.updated) {
       const originalItem = this.newsItems.find(
