@@ -31,7 +31,7 @@ block head
 
 block content 
   h1 お知らせLINE通知登録
-  p 教養学部前期課程HPのお知らせを毎日18時に配信します。学年別の配信にも対応。1日1回のチェックでお知らせを見逃さない！
+  p 教養学部前期課程HPのお知らせをLINEで通知します。学年別の配信にも対応。1日1回のチェックでお知らせを見逃さない！
   p 登録は下のボタンから！
   a(href="./auth/redirect" rel="nofollow noreferrer" id="loginBtn")
     span.large LINE通知に登録
@@ -43,20 +43,26 @@ block content
     picture
       source(src="/assets/line-notify-auth-guide0.webp" srcset="/assets/line-notify-auth-guide0.webp 1x, /assets/line-notify-auth-guide.webp 2x" type="image/webp")
       img(src="/assets/line-notify-auth-guide0.jpg" srcset="/assets/line-notify-auth-guide0.jpg 1x, /assets/line-notify-auth-guide.jpg 2x" alt="1:1でLINE Notifyから通知を受け取る" width="700" height="614")
-  h2 プライバシーポリシー
-  p 本サービスは以下の情報を個人が識別できない形で収集しています。
+  p また、通知に関して2つの設定が可能です。
   ul
-    li LINE Notifyのアクセストークン
-    li アクセス解析のための登録日時・IPアドレス・ユーザーエージェント・登録元識別子
-  p 以上の情報が<b>第三者に提供されることはありません</b>。
-  h2 免責事項
-  p 本サービスは「気づかないお知らせを減らせたらいいな」という思いで作成しました。<br>そのため、以下の事項にお気をつけください。
-  ul
-    li 18時以降に追加されたお知らせは通知されません。
-    li システム障害等でお知らせを通知できない可能性があります。
-    li 本サービスは予告なく終了する場合があります。
-    li 本サービスは送信する通知の完全性、正確性を保証しません。
-    li 本サービス運営者は利用者に生じた損害、損失について一切の責任を負いません。
+    li 通知するお知らせの学年：1年生／2年生／すべて
+    li 通知頻度：お知らせが追加されたらすぐ／1日1回まとめて（18時）
+  h2 プライバシーポリシー・免責事項
+  details 
+    summary プライバシーポリシー
+    p 本サービスは以下の情報を個人が識別できない形で収集しています。なお、第三者への提供はありません。
+    ul
+      li LINE Notifyのアクセストークン
+      li アクセス解析のための登録日時・IPアドレス・ユーザーエージェント・登録元識別子
+  details
+    summary 免責事項
+    p 本サービスは「気づかないお知らせを減らせたらいいな」という思いで作成しました。そのため、以下の事項にお気をつけください。
+    ul
+      li システム障害等でお知らせを通知できない可能性があります。
+      li 本サービスは予告なく終了する場合があります。
+      li 本サービスは送信する通知の完全性、正確性を保証しません。
+      li 本サービス運営者は利用者に生じた損害、損失について一切の責任を負いません。
+  h2 シェア
   include _line_it_button
   include _x_share_button
   p お問合せ先 
