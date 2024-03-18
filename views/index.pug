@@ -4,19 +4,24 @@ block head
   meta(property="og:title" content="前期課程お知らせLINE通知登録")
   meta(property="og:description" content="前期課程HPのお知らせを毎日配LINEでLINEで配信いたします。")
   style.
-    #loginBtn{
+    #loginBtn {
       display: block;
-      padding: 50px;
+      padding: 40px 20px;
       border-radius: 5px;
-      border: 1px solid #333;
       background-color: #06c755;
       text-align: center;
       text-decoration: none;
       font-weight: 600;
       color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+      transition: background-color 0.3s ease;
     }
+    #loginBtn:hover {
+      background-color: #07d05e;
+    }
+
     .large{
-      font-size: 3em;
+      font-size: 2.8em;
     }
     img{
       width: 100%;
@@ -27,8 +32,9 @@ block head
 block content 
   h1 お知らせLINE通知登録
   p 教養学部前期課程HPのお知らせを毎日18時に配信します。学年別の配信にも対応。1日1回のチェックでお知らせを見逃さない！
+  p 登録は下のボタンから！
   a(href="./auth/redirect" rel="nofollow noreferrer" id="loginBtn")
-    span.large LINE通知を受け取る
+    span.large LINE通知に登録
     br
     | ※LINE連携画面に移動します。
   h2 使い方
