@@ -9,5 +9,22 @@ html(lang="ja")
     link(rel="icon" href="/favicon.svg" type="image/svg+xml")
     link(rel="stylesheet", href="/assets/light.min.css")
     block head
+    style.
+      .share-button {
+        display: inline-block;
+        border: none;
+        border-radius: 5px;
+        padding: 0.5em 1em;
+        text-decoration: none;
+        margin-right: 0.5em;
+      }
+      .line-it-button {
+        background: #06c755;
+        color: #fff;
+      }
+      .x-share-button {
+        background: #000;
+        color: #fff;
+      }
   body
     block content
