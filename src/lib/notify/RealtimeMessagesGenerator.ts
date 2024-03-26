@@ -110,10 +110,12 @@ export default class RealtimeMessagesGenerator {
         }
       }
 
-      if (message === "") messages.push(undefined);
-
-      message += this.messageFooter;
-      messages.push(message);
+      if (message === "") {
+        messages.push(undefined);
+      } else {
+        message += this.messageFooter;
+        messages.push(message);
+      }
     }
 
     return messages;
