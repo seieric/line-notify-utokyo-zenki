@@ -1,5 +1,6 @@
 import { NotifyType } from "../zenki/NotifyType";
 import NewsItem from "../zenki/NewsItem";
+import prisma from "../db";
 
 export default class DailyMessagesGenerator{
   private newsItems: Array<NewsItem>;
@@ -10,7 +11,7 @@ export default class DailyMessagesGenerator{
     this.messageFooter = messageFooter;
   }
 
-  public generate(){
+  public async generate(){
     let messages: (string | undefined)[]= [];
     for (const type of [
       NotifyType.ALL,
@@ -18,6 +19,12 @@ export default class DailyMessagesGenerator{
       NotifyType.SECOND_YEAR,
     ]) {
       let message = "";
+      const yesterdayNewsItems = await this.getYesterdayNewsItems();
+      for (const item of yesterdayNewsItems) {
+        if (item.isType(type)) {
+          message += item.toString() + "\n";
+        }
+      }
       for (const item of this.newsItems) {
         if (
           item.isType(type) &&
@@ -35,5 +42,26 @@ export default class DailyMessagesGenerator{
       }
     }
     return messages;
+  }
+
+  // 前日の18時以降に投稿されたニュースを取得
+  private async getYesterdayNewsItems(): Promise<Array<NewsItem>> {
+    const yesterdayNewsItems = await prisma.newsItem.findMany({
+      select: {
+        link: true,
+        type: true,
+        title: true,
+        updated_at: true,
+      },
+      where: {
+        updated_at: {
+          gte: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(18, 0, 0, 0)),
+          lt: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(23, 59, 59, 999)),
+        },
+      },
+    });
+    return yesterdayNewsItems.map(
+      (item) => new NewsItem(item.title, item.link, item.type, item.updated_at)
+    );
   }
 }

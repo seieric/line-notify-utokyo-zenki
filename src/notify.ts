@@ -55,7 +55,7 @@ async function main() {
 
   if (options.daily) {
     const generator = new DailyMessagesGenerator(newsItems, MESSAGE_FOOTER);
-    const messages = generator.generate();
+    const messages = await generator.generate();
     try {
       const results = await prisma.line_notify_tokens.findMany({
         select: {
