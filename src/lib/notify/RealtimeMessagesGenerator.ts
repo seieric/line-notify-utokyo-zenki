@@ -145,12 +145,12 @@ export default class RealtimeMessagesGenerator {
   private _generateNotifyTypeTag(type: NotifyType) {
     switch (type) {
       case NotifyType.FIRST_YEAR:
-        return "#春から東大 #東大教養1年生向けお知らせ";
+        return "#東大教養1年生向けお知らせ";
       case NotifyType.SECOND_YEAR:
         return "#東大教養2年生向けお知らせ";
       case NotifyType.ALL:
       default:
-        return "#春から東大 #東大教養1年生向けお知らせ #東大教養2年生向けお知らせ";
+        return "#東大教養1年生向けお知らせ #東大教養2年生向けお知らせ";
     }
   }
 
