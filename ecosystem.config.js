@@ -1,6 +1,6 @@
 const params = {
   name: "line-notify-utokyo-zenki",
-  instances: 4,
+  instances: 2,
   exec_mode: "cluster",
 }
 
