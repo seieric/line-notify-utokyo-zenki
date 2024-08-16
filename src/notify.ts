@@ -26,7 +26,7 @@ async function notify(token: string, message: string, tokenId: number) {
   try {
     await notify.notify(token, message);
   } catch (error) {
-    if (notify.isTokenInvalidError(error)) {
+    if (notify.isTokenInvalidError(error) || notify.isNotifyNotJoinGroupError(error)) {
       try {
         await prisma.line_notify_tokens.delete({
           where: { id: tokenId },

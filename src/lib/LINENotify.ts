@@ -3,6 +3,7 @@ import axios, { AxiosStatic } from "axios";
 
 // Error class for invalid token
 export class TokenInvalidError extends Error {}
+export class NotifyNotJoinGroupError extends Error {}
 
 export default class LINENotify {
   private axios: AxiosStatic;
@@ -44,6 +45,16 @@ export default class LINENotify {
       ) {
         throw new TokenInvalidError("The token is invalid. It may have been revoked.");
       }
+
+      if (
+        this.axios.isAxiosError(error) &&
+        error.response &&
+        error.response.status === 400 &&
+        error.response.data &&
+        error.response.data.message === "LINE Notify account doesn't join group which you want to send."
+      ) {
+        throw new NotifyNotJoinGroupError("LINE Notify account doesn't join group which you want to send.");
+      }
       // それ以外のエラーはそのまま投げる
       throw error;
     }
@@ -51,5 +62,9 @@ export default class LINENotify {
 
   public isTokenInvalidError(error: unknown): boolean {
     return error instanceof TokenInvalidError;
+  }
+
+  public isNotifyNotJoinGroupError(error: unknown): boolean {
+    return error instanceof NotifyNotJoinGroupError;
   }
 }

@@ -205,6 +205,22 @@ const authRoutes: FastifyPluginAsyncTypebox = async function (fastify) {
             break;
         }
 
+        try {
+          await notify.notify(req.session.token, message);
+        } catch (error) {
+          if (notify.isNotifyNotJoinGroupError(error)) {
+            await prisma.line_notify_tokens.delete({
+              where: { id: req.session.tokenId },
+            });
+            return res.status(400).view("error", {
+              title: "エラー",
+              message:
+                "あなたはLINEグループに通知設定をしましたが、LINE Notifyがグループに参加していないため、通知を送信できません。登録は完了していませんので、もう一度登録し直してください。",
+            });
+          } else {
+            throw error;
+          }
+        }
         await notify.notify(req.session.token, message);
 
         return res.view("finish", {
