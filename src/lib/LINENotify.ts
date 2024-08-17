@@ -60,6 +60,21 @@ export default class LINENotify {
     }
   }
 
+  public async revoke(token: string): Promise<void> {
+    const endpoint = "https://notify-api.line.me/api/revoke";
+    const headers = {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Bearer ${token}`,
+    };
+
+    try {
+      await this.axios.post(endpoint, {}, { headers });
+    } catch (error) {
+      if (!this.isTokenInvalidError(error))
+        throw error;
+    }
+  }
+
   public isTokenInvalidError(error: unknown): boolean {
     return error instanceof TokenInvalidError;
   }
