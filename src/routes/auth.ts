@@ -122,6 +122,24 @@ const authRoutes: FastifyPluginAsyncTypebox = async function (fastify) {
           const csrfToken = generateRandomString();
           req.session.csrfToken = csrfToken;
 
+          try {
+            await notify.notify(req.session.token, "連携が正しく完了しました。ご利用ありがとうございます。");
+          } catch (error) {
+            if (notify.isNotifyNotJoinGroupError(error)) {
+              await prisma.line_notify_tokens.delete({
+                where: { id: req.session.tokenId },
+              });
+              await notify.revoke(req.session.token);
+              return res.status(400).view("error", {
+                title: "エラー",
+                message:
+                  "あなたはLINEグループに通知設定をしましたが、LINE Notifyがグループに参加していないため、通知を送信できません。LINE Notifyをグループに参加させてから、もう一度登録し直してください。",
+              });
+            } else {
+              throw error;
+            }
+          }
+
           return res.view("select.pug", {
             title: "通知内容の選択",
             message:
@@ -205,23 +223,6 @@ const authRoutes: FastifyPluginAsyncTypebox = async function (fastify) {
             break;
         }
 
-        try {
-          await notify.notify(req.session.token, message);
-        } catch (error) {
-          if (notify.isNotifyNotJoinGroupError(error)) {
-            await prisma.line_notify_tokens.delete({
-              where: { id: req.session.tokenId },
-            });
-            await notify.revoke(req.session.token);
-            return res.status(400).view("error", {
-              title: "エラー",
-              message:
-                "あなたはLINEグループに通知設定をしましたが、LINE Notifyがグループに参加していないため、通知を送信できません。LINE Notifyをグループに参加させてから、もう一度登録し直してください。",
-            });
-          } else {
-            throw error;
-          }
-        }
         await notify.notify(req.session.token, message);
 
         return res.view("finish", {
