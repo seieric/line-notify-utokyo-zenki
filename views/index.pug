@@ -14,7 +14,7 @@ block head
       display: block;
       padding: 40px 20px;
       border-radius: 5px;
-      background-color: #06c755;
+      background-color: #a9a9a9;
       text-align: center;
       text-decoration: none;
       font-weight: 600;
@@ -39,10 +39,14 @@ block content
   h1 お知らせLINE通知登録
   p 教養学部前期課程HPのお知らせをLINEで通知します。学年別の配信にも対応。1日1回のチェックでお知らせを見逃さない！
   p 登録は下のボタンから！登録者数170人突破！
-  a(href="./auth/redirect" rel="nofollow noreferrer" id="loginBtn")
-    span.large LINE通知に登録
+  p(style="color: red;font-weight: bold;") LINE Notifyのサービス終了に伴い、本サービスは2024年1月14日をもって新規登録受付を終了しました。既にご利用中の方は、2025年3月31日まで通知を受け取れます。
+  span(id="loginBtn")
+    del
+      span.large LINE通知に登録
     br
     | ※LINE連携画面に移動します。
+    br
+    | ※2025年1月14日をもって新規登録受付を終了しました。
   h2 使い方
   p LINE通知を個人で受け取れるよう、次の画面が表示されたら赤枠の部分を選択してください。
   div(style="text-align: center;")
